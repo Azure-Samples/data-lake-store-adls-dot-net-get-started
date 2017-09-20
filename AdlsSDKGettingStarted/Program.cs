@@ -11,7 +11,7 @@ namespace AdlsSDKGettingStarted
         private static string clientId = "FILL-IN-HERE";         // Also called application id in portal
         private static string clientSecret = "FILL-IN-HERE";
         private static string domain = "FILL-IN-HERE";            // Also called tenant Id
-        private static string clientAccountPath = "FILL-IN-HERE";
+        private static string adlsAccountName = "FILL-IN-HERE";
 
         public static void Main(string[] args)
         {
@@ -20,13 +20,13 @@ namespace AdlsSDKGettingStarted
             var clientCreds = ApplicationTokenProvider.LoginSilentAsync(domain, creds).GetAwaiter().GetResult();
 
             // Create ADLS client object
-            AdlsClient client = AdlsClient.CreateClient(clientAccountPath, clientCreds);
+            AdlsClient client = AdlsClient.CreateClient(adlsAccountName, clientCreds);
 
             try
             {
                 string fileName = "/Test/testFilename1.txt";
 
-                // Create a file
+                // Create a file - automatically creates any parent directories that don't exist
                 using (var streamWriter = new StreamWriter(client.CreateFile(fileName, IfExists.Overwrite)))
                 {
                     streamWriter.WriteLine("This is test data to write");
@@ -50,20 +50,20 @@ namespace AdlsSDKGettingStarted
                 }
 
                 // Get the properties of the file
-                var diren = client.GetDirectoryEntry(fileName);
-                PrintDirectoryEntry(diren);
+                var directoryEntry = client.GetDirectoryEntry(fileName);
+                PrintDirectoryEntry(directoryEntry);
 
                 // Rename a file
                 string destFilePath = "/Test/testRenameDest3.txt";
                 Console.WriteLine(client.Rename(fileName, destFilePath, true));
 
                 // Enumerate directory
-                foreach (var dir in client.EnumerateDirectory("/Test"))
+                foreach (var entry in client.EnumerateDirectory("/Test"))
                 {
-                    PrintDirectoryEntry(dir);
+                    PrintDirectoryEntry(entry);
                 }
 
-                // Delete a dirtectory and all it's subdirectories and files
+                // Delete a directory and all it's subdirectories and files
                 client.DeleteRecursive("/Test");
 
             }
@@ -76,17 +76,17 @@ namespace AdlsSDKGettingStarted
             Console.ReadLine();
         }
         
-        private static void PrintDirectoryEntry(DirectoryEntry diren)
+        private static void PrintDirectoryEntry(DirectoryEntry entry)
         {
-            Console.WriteLine($"Name: {diren.Name}");
-            Console.WriteLine($"FullName: {diren.FullName}");
-            Console.WriteLine($"Length: {diren.Length}");
-            Console.WriteLine($"Type: {diren.Type}");
-            Console.WriteLine($"User: {diren.User}");
-            Console.WriteLine($"Group: {diren.Group}");
-            Console.WriteLine($"Permission: {diren.Permission}");
-            Console.WriteLine($"Modified Time: {diren.LastModifiedTime}");
-            Console.WriteLine($"Last Accessed Time: {diren.LastAccessTime}");
+            Console.WriteLine($"Name: {entry.Name}");
+            Console.WriteLine($"FullName: {entry.FullName}");
+            Console.WriteLine($"Length: {entry.Length}");
+            Console.WriteLine($"Type: {entry.Type}");
+            Console.WriteLine($"User: {entry.User}");
+            Console.WriteLine($"Group: {entry.Group}");
+            Console.WriteLine($"Permission: {entry.Permission}");
+            Console.WriteLine($"Modified Time: {entry.LastModifiedTime}");
+            Console.WriteLine($"Last Accessed Time: {entry.LastAccessTime}");
             Console.WriteLine();
         }
 
