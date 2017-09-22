@@ -1,6 +1,6 @@
-﻿using Microsoft.Azure.DataLake.Store;
-using System;
+﻿using System;
 using System.IO;
+using Microsoft.Azure.DataLake.Store;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.Rest.Azure.Authentication;
 
@@ -8,19 +8,19 @@ namespace AdlsSDKGettingStarted
 {
     public class Program
     {
-        private static string clientId = "FILL-IN-HERE";         // Also called application id in portal
+        private static string applicationId = "FILL-IN-HERE";     // Also called client id
         private static string clientSecret = "FILL-IN-HERE";
-        private static string domain = "FILL-IN-HERE";            // Also called tenant Id
-        private static string adlsAccountName = "FILL-IN-HERE";
+        private static string tenantId = "FILL-IN-HERE";
+        private static string adlsAccountFQDN = "FILL-IN-HERE";   // full account FQDN, not just the account name like example.azure.datalakestore.net
 
         public static void Main(string[] args)
         {
             // Obtain AAD token
-            var creds = new ClientCredential(clientId, clientSecret);
-            var clientCreds = ApplicationTokenProvider.LoginSilentAsync(domain, creds).GetAwaiter().GetResult();
+            var creds = new ClientCredential(applicationId, clientSecret);
+            var clientCreds = ApplicationTokenProvider.LoginSilentAsync(tenantId, creds).GetAwaiter().GetResult();
 
             // Create ADLS client object
-            AdlsClient client = AdlsClient.CreateClient(adlsAccountName, clientCreds);
+            AdlsClient client = AdlsClient.CreateClient(adlsAccountFQDN, clientCreds);
 
             try
             {
@@ -55,7 +55,7 @@ namespace AdlsSDKGettingStarted
 
                 // Rename a file
                 string destFilePath = "/Test/testRenameDest3.txt";
-                Console.WriteLine(client.Rename(fileName, destFilePath, true));
+                client.Rename(fileName, destFilePath, true);
 
                 // Enumerate directory
                 foreach (var entry in client.EnumerateDirectory("/Test"))
