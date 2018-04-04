@@ -12,7 +12,7 @@ namespace AdlsSDKGettingStarted
         private static string applicationId = "FILL-IN-HERE";     // Also called client id
         private static string clientSecret = "FILL-IN-HERE";
         private static string tenantId = "FILL-IN-HERE";
-        private static string adlsAccountFQDN = "FILL-IN-HERE";   // full account FQDN, not just the account name like example.azure.datalakestore.net
+        private static string adlsAccountFQDN = "FILL-IN-HERE";   // full account FQDN, not just the account name like example.azuredatalakestore.net
 
         public static void Main(string[] args)
         {
