@@ -4,11 +4,11 @@ platforms: .NET
 author: rahuldutta90
 ---
 
-# Azure Data Lake Store .Net: Getting Started
+# Azure Data Lake Storage Gen1 .Net: Getting Started
 
-This sample demonstrates how to interact with Azure Data Lake Store service using the .NET SDK. The sample walk through following main steps:
+This sample demonstrates how to interact with the Azure Data Lake Storage Gen1 service using the .NET SDK. The sample walks through following main steps:
 - Acquire an Azure ActiveDirectory OAuth token (ServiceClientCredential)
-- Create a ADLS client object using the account path and OAuth token instance.
+- Create a Data Lake Storage Gen1 client object using the account path and OAuth token instance.
 - Use the methods on the client object to interact with the store.
 - Get a write stream and write a file on store.
 - Get a read stream and read the file from store.
