@@ -1,7 +1,11 @@
 ---
-services: data-lake-store
-platforms: .NET
-author: rahuldutta90
+page_type: sample
+languages:
+- javascript
+products:
+- azure
+description: "This sample demonstrates how to interact with the Azure Data Lake Storage Gen1 service using the .NET SDK."
+urlFragment: data-lake-store-adls-dot-net-get-started
 ---
 
 # Azure Data Lake Storage Gen1 .Net: Getting Started
