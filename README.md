@@ -1,14 +1,14 @@
 ---
 page_type: sample
 languages:
-- javascript
+- csharp
 products:
 - azure
 description: "This sample demonstrates how to interact with the Azure Data Lake Storage Gen1 service using the .NET SDK."
-urlFragment: data-lake-store-adls-dot-net-get-started
+urlFragment: get-started-net-azure-data-lake
 ---
 
-# Azure Data Lake Storage Gen1 .Net: Getting Started
+# Azure Data Lake Storage Gen1 .NET: Getting Started
 
 This sample demonstrates how to interact with the Azure Data Lake Storage Gen1 service using the .NET SDK. The sample walks through following main steps:
 - Acquire an Azure ActiveDirectory OAuth token (ServiceClientCredential)
