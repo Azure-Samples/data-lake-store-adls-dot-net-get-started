@@ -1,9 +1,11 @@
-﻿using System;
+﻿using Azure;
+using Azure.Identity;
+using Azure.Storage;
+using Azure.Storage.Files.DataLake;
+using Azure.Storage.Files.DataLake.Models;
+using System;
 using System.IO;
 using System.Text;
-using Microsoft.Azure.DataLake.Store;
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
-using Microsoft.Rest.Azure.Authentication;
 
 namespace AdlsSDKGettingStarted
 {
@@ -12,41 +14,53 @@ namespace AdlsSDKGettingStarted
         private static string applicationId = "FILL-IN-HERE";     // Also called client id
         private static string clientSecret = "FILL-IN-HERE";
         private static string tenantId = "FILL-IN-HERE";
-        private static string adlsAccountFQDN = "FILL-IN-HERE";   // full account FQDN, not just the account name like example.azure.datalakestore.net
+        private static string serviceUri = "FILL-IN-HERE";        // full account FQDN, not just the account name like https://{ACCOUNTNAME}.dfs.core.windows.net/
 
         public static void Main(string[] args)
         {
-            // Obtain AAD token
-            var creds = new ClientCredential(applicationId, clientSecret);
-            var clientCreds = ApplicationTokenProvider.LoginSilentAsync(tenantId, creds).GetAwaiter().GetResult();
+            // Create Client Secret Credential
+            var creds = new ClientSecretCredential(tenantId, applicationId, clientSecret);
 
-            // Create ADLS client object
-            AdlsClient client = AdlsClient.CreateClient(adlsAccountFQDN, clientCreds);
+            // Create data lake file service client object
+            DataLakeServiceClient serviceClient = new DataLakeServiceClient(new Uri(serviceUri), creds);
+            var name = "sample-filesystem" + Guid.NewGuid().ToString("n").Substring(0, 8);
+            // Create data lake file system client object
+            DataLakeFileSystemClient filesystemclient = serviceClient.GetFileSystemClient(name);
+            
+            filesystemclient.CreateIfNotExists();
 
             try
             {
+                long length;
                 string fileName = "/Test/testFilename1.txt";
+                DataLakeFileClient file = filesystemclient.GetFileClient(fileName);
 
-                // Create a file - automatically creates any parent directories that don't exist
-                // The AdlsOuputStream preserves record boundaries - it does not break records while writing to the store
-                using (var stream = client.CreateFile(fileName, IfExists.Overwrite))
+                // Upload a file - automatically creates any parent directories that don't exist
+                using (var stream = new MemoryStream())
                 {
                     byte[] textByteArray = Encoding.UTF8.GetBytes("This is test data to write.\r\n");
                     stream.Write(textByteArray, 0, textByteArray.Length);
 
                     textByteArray = Encoding.UTF8.GetBytes("This is the second line.\r\n");
                     stream.Write(textByteArray, 0, textByteArray.Length);
+                    length = stream.Length;
+                    stream.Seek(0, SeekOrigin.Begin);
+                    file.Upload(stream, true);
                 }
 
                 // Append to existing file
-                using (var stream = client.GetAppendStream(fileName))
+                using (var stream = new MemoryStream())
                 {
                     byte[] textByteArray = Encoding.UTF8.GetBytes("This is the added line.\r\n");
                     stream.Write(textByteArray, 0, textByteArray.Length);
+                    stream.Seek(0, SeekOrigin.Begin);
+                    file.Append(stream, length);
+                    file.Flush(length + stream.Length);
                 }
 
                 //Read file contents
-                using (var readStream = new StreamReader(client.GetReadStream(fileName)))
+                Response<FileDownloadInfo> fileContents = file.Read();
+                using (var readStream = new StreamReader(fileContents.Value.Content))
                 {
                     string line;
                     while ((line = readStream.ReadLine()) != null)
@@ -56,55 +70,50 @@ namespace AdlsSDKGettingStarted
                 }
 
                 // Get the properties of the file
-                var directoryEntry = client.GetDirectoryEntry(fileName);
-                PrintDirectoryEntry(directoryEntry);
+                PathProperties pathProperties = file.GetProperties();
+                PrintDirectoryEntry(pathProperties);
 
                 // Rename a file
                 string destFilePath = "/Test/testRenameDest3.txt";
-                client.Rename(fileName, destFilePath, true);
+                file.Rename(destFilePath);
 
                 // Enumerate directory
-                foreach (var entry in client.EnumerateDirectory("/Test"))
+                foreach (var pathItem in filesystemclient.GetPaths("/Test"))
                 {
-                    PrintDirectoryEntry(entry);
+                    PrintDirectoryEntry(pathItem);
                 }
 
                 // Delete a directory and all it's subdirectories and files
-                client.DeleteRecursive("/Test");
+                filesystemclient.DeleteDirectory("/Test");
 
             }
-            catch (AdlsException e)
+            finally
             {
-                PrintAdlsException(e);
+                filesystemclient.Delete();
             }
 
             Console.WriteLine("Done. Press ENTER to continue ...");
             Console.ReadLine();
         }
         
-        private static void PrintDirectoryEntry(DirectoryEntry entry)
+        private static void PrintDirectoryEntry(PathProperties pathProperties)
         {
-            Console.WriteLine($"Name: {entry.Name}");
-            Console.WriteLine($"FullName: {entry.FullName}");
-            Console.WriteLine($"Length: {entry.Length}");
-            Console.WriteLine($"Type: {entry.Type}");
-            Console.WriteLine($"User: {entry.User}");
-            Console.WriteLine($"Group: {entry.Group}");
-            Console.WriteLine($"Permission: {entry.Permission}");
-            Console.WriteLine($"Modified Time: {entry.LastModifiedTime}");
-            Console.WriteLine($"Last Accessed Time: {entry.LastAccessTime}");
+            Console.WriteLine($"ExpiresOn Time: {pathProperties.ExpiresOn}");
+            Console.WriteLine($"ContentType: {pathProperties.ContentType}");
+            Console.WriteLine($"Metadata: {pathProperties.Metadata}");
+            Console.WriteLine($"Created Time: {pathProperties.CreatedOn}");
+            Console.WriteLine($"Length: {pathProperties.ContentLength}");
+            Console.WriteLine($"Modified Time: {pathProperties.LastModified}");
             Console.WriteLine();
         }
-
-        private static void PrintAdlsException(AdlsException exp)
+        private static void PrintDirectoryEntry(PathItem pathItem)
         {
-            Console.WriteLine("ADLException");
-            Console.WriteLine($"   Http Status: {exp.HttpStatus}");
-            Console.WriteLine($"   Http Message: {exp.HttpMessage}");
-            Console.WriteLine($"   Remote Exception Name: {exp.RemoteExceptionName}");
-            Console.WriteLine($"   Server Trace Id: {exp.TraceId}");
-            Console.WriteLine($"   Exception Message: {exp.Message}");
-            Console.WriteLine($"   Exception Stack Trace: {exp.StackTrace}");
+            Console.WriteLine($"Name: {pathItem.Name}");
+            Console.WriteLine($"Length: {pathItem.ContentLength}");
+            Console.WriteLine($"User: {pathItem.Owner}");
+            Console.WriteLine($"Group: {pathItem.Group}");
+            Console.WriteLine($"Permission: {pathItem.Permissions}");
+            Console.WriteLine($"Modified Time: {pathItem.LastModified}");
             Console.WriteLine();
         }
     }
