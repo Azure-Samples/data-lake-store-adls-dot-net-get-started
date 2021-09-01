@@ -35,38 +35,16 @@ namespace AdlsSDKGettingStarted
                 DataLakeFileClient file = filesystemclient.GetFileClient(fileName);
 
                 // Upload a file - automatically creates any parent directories that don't exist
-                using (var stream = new MemoryStream())
-                {
-                    byte[] textByteArray = Encoding.UTF8.GetBytes("This is test data to write.\r\n");
-                    stream.Write(textByteArray, 0, textByteArray.Length);
+                length = BinaryData.FromString("This is test data to write.\r\nThis is the second line.\r\n").ToStream().Length;
 
-                    textByteArray = Encoding.UTF8.GetBytes("This is the second line.\r\n");
-                    stream.Write(textByteArray, 0, textByteArray.Length);
-                    length = stream.Length;
-                    stream.Seek(0, SeekOrigin.Begin);
-                    file.Upload(stream, true);
-                }
+                file.Upload(BinaryData.FromString("This is test data to write.\r\nThis is the second line.\r\n").ToStream(),true);
 
-                // Append to existing file
-                using (var stream = new MemoryStream())
-                {
-                    byte[] textByteArray = Encoding.UTF8.GetBytes("This is the added line.\r\n");
-                    stream.Write(textByteArray, 0, textByteArray.Length);
-                    stream.Seek(0, SeekOrigin.Begin);
-                    file.Append(stream, length);
-                    file.Flush(length + stream.Length);
-                }
-
+                file.Append(BinaryData.FromString("This is the added line.\r\n").ToStream(), length);
+                file.Flush(length + BinaryData.FromString("This is the added line.\r\n").ToStream().Length);
                 //Read file contents
                 Response<FileDownloadInfo> fileContents = file.Read();
-                using (var readStream = new StreamReader(fileContents.Value.Content))
-                {
-                    string line;
-                    while ((line = readStream.ReadLine()) != null)
-                    {
-                        Console.WriteLine(line);
-                    }
-                }
+                
+                Console.WriteLine(BinaryData.FromStream(fileContents.Value.Content).ToString());
 
                 // Get the properties of the file
                 PathProperties pathProperties = file.GetProperties();
@@ -75,6 +53,7 @@ namespace AdlsSDKGettingStarted
                 // Rename a file
                 string destFilePath = "/Test/testRenameDest3.txt";
                 file.Rename(destFilePath);
+                Console.WriteLine("The file URI is "+ file.Uri);
 
                 // Enumerate directory
                 foreach (var pathItem in filesystemclient.GetPaths("/Test"))
