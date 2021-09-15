@@ -13,7 +13,7 @@ namespace AdlsSDKGettingStarted
         private static string applicationId = "FILL-IN-HERE";     // Also called client id
         private static string clientSecret = "FILL-IN-HERE";
         private static string tenantId = "FILL-IN-HERE";
-        private static string serviceUri = "FILL-IN-HERE";        // full account FQDN, not just the account name like https://{ACCOUNTNAME}.dfs.core.windows.net/
+        private static string serviceUri = "FILL-IN-HERE";        // full account FQDN, not just the account name - it should look like https://{ACCOUNTNAME}.dfs.core.windows.net/
 
         public static void Main(string[] args)
         {
