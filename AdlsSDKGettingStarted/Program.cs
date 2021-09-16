@@ -53,6 +53,7 @@ namespace AdlsSDKGettingStarted
                 // Rename a file
                 string destFilePath = "/Test/testRenameDest3.txt";
                 file.Rename(destFilePath);
+                file = filesystemclient.GetFileClient(destFilePath);
                 Console.WriteLine("The file URI is "+ file.Uri);
 
                 // Enumerate directory
